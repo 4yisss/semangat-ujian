@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semangat Ujian! ✨ - Kartu Ucapan Interaktif</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter / Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Effect */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 40px -15px rgba(14, 165, 233, 0.15);
+        }
+
+        /* Smooth 3D Card Tilt Effect */
+        .card-tilt {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+        }
+        .card-tilt:hover {
+            transform: translateY(-6px) rotateX(2deg) rotateY(-2deg);
+            box-shadow: 0 25px 50px -12px rgba(14, 165, 233, 0.25);
+        }
+
+        /* Pulse Subtle Glow Animation */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(56, 189, 248, 0.7); }
+        }
+        .glow-btn {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+
+        /* Shimmering Text Effect */
+        .shimmer-text {
+            background: linear-gradient(90deg, #0284c7, #16a34a, #0284c7);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shine 4s linear infinite;
+        }
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-800 antialiased selection:bg-sky-200 selection:text-sky-900">
+
+    <header class="w-full max-w-5xl mx-auto px-4 pt-6 pb-2 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <span class="p-2.5 bg-gradient-to-tr from-sky-400 to-emerald-400 text-white rounded-2xl shadow-md text-xl">🎓</span>
+            <span class="font-bold text-xl tracking-tight text-slate-800">SelamatUjian<span class="text-sky-500">.id</span></span>
+        </div>
+
+        <!-- Audio Music Toggle Control & Settings -->
+        <div class="flex items-center space-x-2">
+            <button id="audioToggleBtn" onclick="toggleAudio()" class="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/80 hover:bg-white shadow-sm border border-slate-200/80 text-xs font-semibold text-slate-700 transition-all duration-200 hover:shadow">
+                <i id="audioIcon" class="fa-solid fa-music text-sky-500"></i>
+                <span id="audioText">Musik : OFF</span>
+            </button>
+            <button onclick="openAudioModal()" class="p-2 rounded-full bg-white/80 hover:bg-white border border-slate-200/80 text-slate-500 hover:text-sky-600 text-xs shadow-sm transition" title="Pengaturan Musik (Ganti Tautan MP3)">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Audio Element HTML5 untuk File MP3 -->
+    <audio id="bgAudioPlayer" loop preload="auto" class="hidden"></audio>
+
+    <!-- Modal Pengaturan Tautan Audio MP3 -->
+    <div id="audioModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-slate-800 text-base flex items-center">
+                    <i class="fa-solid fa-sliders text-sky-500 mr-2"></i> Pengaturan Musik
+                </h3>
+                <button onclick="closeAudioModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+                Anda bisa mengunggah file musik langsung dari HP/Komputer Anda atau memasukkan **tautan file direct .mp3**.
+            </p>
+            <div class="space-y-3">
+                <!-- Fitur Unggah Audio dari Perangkat -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">
+                        <i class="fa-solid fa-file-audio text-emerald-500 mr-1"></i> Unggah File Audio dari HP / Laptop:
+                    </label>
+                    <input type="file" id="audioFileInput" accept="audio/*" onchange="handleAudioFileUpload(event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border border-slate-200 rounded-xl p-1 bg-slate-50">
+                </div>
+
+                <div class="relative flex py-1 items-center">
+                    <div class="flex-grow border-t border-slate-200"></div>
+                    <span class="flex-shrink mx-2 text-[10px] text-slate-400 font-bold uppercase">Atau Gunakan Link</span>
+                    <div class="flex-grow border-t border-slate-200"></div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Tautan File Direct MP3:</label>
+                    <input type="url" id="customAudioUrl" placeholder="https://example.com/instrumental-acoustic.mp3" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-sky-300 outline-none">
+                </div>
+                <div class="flex flex-wrap justify-end gap-2 pt-2">
+                    <button onclick="resetToSynthAudio()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition">Gunakan Akustik Bawaan</button>
+                    <button onclick="saveAudioUrl()" class="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold rounded-xl shadow transition">Simpan & Putar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-grow max-w-5xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- LEFT COLUMN: Card Motivasi Interaktif (7 cols on Large Screens) -->
+        <section class="lg:col-span-7 flex flex-col space-y-6">
+            
+            <!-- Card Input Nama & Ucapan -->
+            <div class="glass-card card-tilt rounded-3xl p-6 md:p-8 relative overflow-hidden border border-white/60">
+                <!-- Decorative background elements -->
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-sky-200/50 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-emerald-200/50 rounded-full blur-2xl pointer-events-none"></div>
+
+                <!-- Input Field Nama Target -->
+                <div class="mb-6 relative">
+                    <label for="userNameInput" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                        <i class="fa-solid fa-user-pen mr-1 text-sky-500"></i> Ditujukan Untuk:
+                    </label>
+                    <input type="text" id="userNameInput" value="Pejuang Ujian" placeholder="Tuliskan nama kamu / temanmu..." 
+                        class="w-full px-4 py-3 rounded-2xl bg-white/80 border border-slate-200 focus:border-sky-400 focus:ring-4 focus:ring-sky-100 transition-all outline-none font-semibold text-slate-800 shadow-inner"
+                        oninput="updateCardName()">
+                </div>
+
+                <!-- Main Motivation Card Display -->
+                <div class="bg-gradient-to-br from-white to-sky-50/60 rounded-2xl p-6 border border-sky-100/80 shadow-sm relative text-center flex flex-col items-center min-h-[220px] justify-center transition-all">
+                    <div id="badgeTag" class="inline-block px-3 py-1 bg-sky-100 text-sky-700 font-bold text-xs rounded-full mb-3 tracking-wide transition-opacity">
+                        ✨ MENTALLY READY
+                    </div>
+                    
+                    <h2 class="text-2xl md:text-3xl font-extrabold mb-3 shimmer-text">
+                        Semangat, <span id="displayName">Siti Asnawiyah</span>! 🎉
+                    </h2>
+
+                    <p id="quoteText" class="text-slate-600 font-medium md:text-lg leading-relaxed max-w-md my-2 transition-opacity">
+                        "Fokus pada setiap langkah praktikum dan berikan aksi terbaikmu hari ini. Hasil yang luar biasa sedang menunggumu di depan!"
+                    </p>
+
+                    <span id="authorTag" class="text-xs font-semibold text-slate-400 mt-2 italic">
+                        ~ Semangat Bestie :p
+                    </span>
+                </div>
+
+                <!-- Action Button Group -->
+                <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                    <button onclick="generateNewQuote()" class="glow-btn flex-1 py-3.5 px-6 bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-bold rounded-2xl shadow-lg transition-all transform active:scale-95 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Dapatkan Semangat Baru</span>
+                    </button>
+
+                    <button onclick="copyGreeting()" class="py-3.5 px-5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-2xl shadow-sm transition-all transform active:scale-95 flex items-center justify-center space-x-2">
+                        <i id="copyIcon" class="fa-solid fa-copy text-sky-500"></i>
+                        <span id="copyBtnText">Salin Ucapan</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mini Game / Mode Fokus Sederhana -->
+            <div class="glass-card rounded-3xl p-6 border border-white/60">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-800 text-base flex items-center">
+                        <i class="fa-solid fa-brain text-amber-500 mr-2"></i> Latihan Napas Relaksasi (4-4-4)
+                    </h3>
+                    <span class="text-xs font-semibold bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full">Anti Stres</span>
+                </div>
+                <p class="text-xs text-slate-500 mb-4">Lakukan ini jika merasa cemas atau gugup sebelum ujian dimulai:</p>
+
+                <div class="flex flex-col items-center justify-center py-6 bg-slate-50/80 rounded-2xl border border-slate-100">
+                    <div id="breathCircle" class="w-24 h-24 rounded-full bg-gradient-to-tr from-sky-400 to-emerald-400 flex items-center justify-center text-white font-bold text-sm shadow-lg transition-all duration-[4000ms] ease-in-out scale-100">
+                        <span id="breathStatus" class="text-center">Mulai</span>
+                    </div>
+                    <button id="breathBtn" onclick="startBreathingExercise()" class="mt-5 px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl shadow transition">
+                        Klik untuk Mulai Napas Relaksasi
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- RIGHT COLUMN: Checklist Persiapan & Tips (5 cols on Large Screens) -->
+        <section class="lg:col-span-5 flex flex-col space-y-6">
+            
+            <div class="glass-card rounded-3xl p-6 border border-white/60">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-lg flex items-center">
+                            <i class="fa-solid fa-list-check text-emerald-500 mr-2"></i> Checklist Persiapan
+                        </h3>
+                        <p class="text-xs text-slate-500">Pastikan hal-hal penting ini sudah siap!</p>
+                    </div>
+                    <span id="checklistPercent" class="text-sm font-extrabold text-emerald-600 bg-emerald-100 px-3 py-1 rounded-xl">0%</span>
+                </div>
+
+                <!-- Dynamic Progress Bar -->
+                <div class="w-full bg-slate-100 rounded-full h-3 mb-5 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-sky-400 to-emerald-400 h-full w-0 rounded-full transition-all duration-500"></div>
+                </div>
+
+                <!-- Checklist Items -->
+                <div id="checklistGroup" class="space-y-3">
+                    <label class="flex items-center p-3 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/80 cursor-pointer transition">
+                        <input type="checkbox" onchange="updateProgress()" class="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-400 border-slate-300">
+                        <span class="ml-3 text-xs md:text-sm font-medium text-slate-700">Sudah Berdoa & Minta Restu Orang Tua/Guru</span>
+                    </label>
+
+                    <label class="flex items-center p-3 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/80 cursor-pointer transition">
+                        <input type="checkbox" onchange="updateProgress()" class="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-400 border-slate-300">
+                        <span class="ml-3 text-xs md:text-sm font-medium text-slate-700">Tidur Cukup & Kondisi Badan Fit</span>
+                    </label>
+
+                    <label class="flex items-center p-3 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/80 cursor-pointer transition">
+                        <input type="checkbox" onchange="updateProgress()" class="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-400 border-slate-300">
+                        <span class="ml-3 text-xs md:text-sm font-medium text-slate-700">Sudah Sarapan / Bawa Air Minum</span>
+                    </label>
+
+                    <label class="flex items-center p-3 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/80 cursor-pointer transition">
+                        <input type="checkbox" onchange="updateProgress()" class="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-400 border-slate-300">
+                        <span class="ml-3 text-xs md:text-sm font-medium text-slate-700">Yakin Pada Kemampuan Diri Sendiri!</span>
+                    </label>
+                </div>
+
+                <!-- Reward Banner when 100% -->
+                <div id="readyBanner" class="hidden mt-4 p-3 bg-emerald-500/10 border border-emerald-300 rounded-2xl text-center text-emerald-800 text-xs font-bold animate-bounce">
+                    🎉 Luar biasa! Kamu sudah 100% Siap Tempur! Good Luck! ✨
+                </div>
+            </div>
+
+            <!-- Quick Tips Box -->
+            <div class="glass-card rounded-3xl p-5 border border-white/60 bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg">
+                <div class="flex items-center space-x-3 mb-2">
+                    <span class="p-2 bg-white/20 rounded-xl"><i class="fa-solid fa-lightbulb"></i></span>
+                    <h4 class="font-bold text-sm">Tips Saat Ujian:</h4>
+                </div>
+                <ul class="text-xs text-sky-100 space-y-1.5 pl-2">
+                    <li>• Percaya dengan kemampuan diri sendiri.</li>
+                    <li>• Kamu sudah belajar dan kamu harus yakin kalo kamu bisa.</li>
+                    <li>• Fokus dan jangan terburu buru.</li>
+                </ul>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Custom Toast UI Container -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center space-x-3">
+            <span id="toastIcon" class="text-emerald-400 text-lg"><i class="fa-solid fa-circle-check"></i></span>
+            <span id="toastMessage" class="text-xs font-semibold">Pesan berhasil disalin!</span>
+        </div>
+    </div>
+
+    <footer class="w-full text-center py-6 text-xs text-slate-400 font-medium">
+        Dibuat khusus untuk menyemangati kamu yang sedang berjuang ✨ Tetap Semangat!
+    </footer>
+
+    <script>
+        let isAudioPlaying = false;
+        let isBreathing = false;
+        let audioCtx = null;
+        let synthInterval = null;
+        let customAudioMp3Url = "";
+        let currentQuoteIndex = 0;
+
+        /* Daftar Kutipan Motivasi Ujian Praktek */
+        const quotesDatabase = [
+            {
+                quote: "Fokus pada setiap langkah praktikum dan berikan aksi terbaikmu hari ini. Hasil yang luar biasa sedang menunggumu di depan!",
+                tag: "✨ MENTALLY READY"
+            },
+            {
+                quote: "Jangan biarkan rasa gugup menggoyahkan tanganmu. Kamu sudah berlatih berulang kali, peragakan dengan percaya diri!",
+                tag: "🔥 ULTRA CONFIDENT"
+            },
+            {
+                quote: "Setiap tahapan ujian praktek yang kamu selesaikan adalah langkah nyata menuju keahlian dan impianmu.",
+                tag: "🎯 GOAL ORIENTED"
+            },
+            {
+                quote: "Tarik napas dalam-dalam, tetap tenang, dan cermati setiap prosedur dengan teliti. Kamu jauh lebih terampil dari yang kamu kira!",
+                tag: "🧘 PEACE OF MIND"
+            },
+            {
+                quote: "Ujian praktek adalah panggung untuk menunjukkan penguasaan teknikmu. Tetap fokus dan tunjukkan performa terbaik!",
+                tag: "💪 CHAMPION MINDSET"
+            },
+            {
+                quote: "Ingat berapa banyak jam latihan yang sudah kamu lewati. Hari ini saatnya membuktikan keterampilan terbaikmu!",
+                tag: "⭐ HARD WORKER"
+            },
+            {
+                quote: "Tunjukkan kerapihan, ketelitian, dan ketenangan dalam beraksi. Percayalah pada kemampuan teknis yang kamu miliki!",
+                tag: "🚀 READY TO FLY"
+            },
+            {
+                quote: "Pahami instruksi tugas praktek, persiapkan alat & bahan dengan tenang, dan eksekusi setiap detailnya dengan rapi.",
+                tag: "💡 SMART STRATEGY"
+            }
+        ];
+
+        /* Handle File Upload dari Perangkat */
+        function handleAudioFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (customAudioMp3Url && customAudioMp3Url.startsWith('blob:')) {
+                    URL.revokeObjectURL(customAudioMp3Url);
+                }
+                customAudioMp3Url = URL.createObjectURL(file);
+                closeAudioModal();
+                if (isAudioPlaying) {
+                    stopAudio();
+                }
+                startAudio();
+                showToast(`🎵 Memutar file audio: ${file.name}`);
+            }
+        }
+
+        /* Modal Audio Control */
+        function openAudioModal() {
+            document.getElementById('audioModal').classList.remove('hidden');
+        }
+
+        function closeAudioModal() {
+            document.getElementById('audioModal').classList.add('hidden');
+        }
+
+        function saveAudioUrl() {
+            const inputUrl = document.getElementById('customAudioUrl').value.trim();
+            if (inputUrl && !inputUrl.endsWith('.mp3') && inputUrl.includes('pixabay.com')) {
+                showToast("⚠️ Masukkan tautan langsung file .mp3, bukan tautan halaman Pixabay");
+                return;
+            }
+            
+            customAudioMp3Url = inputUrl;
+            closeAudioModal();
+            
+            if (isAudioPlaying) {
+                stopAudio();
+                startAudio();
+            } else {
+                startAudio();
+            }
+            showToast(customAudioMp3Url ? "🎵 Tautan MP3 disimpan & diputar!" : "🎵 Menggunakan instrumen akustik bawaan");
+        }
+
+        function resetToSynthAudio() {
+            customAudioMp3Url = "";
+            document.getElementById('customAudioUrl').value = "";
+            closeAudioModal();
+            if (isAudioPlaying) {
+                stopAudio();
+                startAudio();
+            }
+            showToast("🎵 Kembali ke instrumen akustik bawaan");
+        }
+
+        /* Safe Confetti Wrapper Function */
+        function triggerConfetti(options = {}) {
+            if (typeof window.confetti === 'function') {
+                try {
+                    const safeOpts = {
+                        particleCount: options.particleCount || 60,
+                        spread: options.spread || 70,
+                        origin: options.origin || { y: 0.6 }
+                    };
+                    if (options.colors) safeOpts.colors = options.colors;
+                    window.confetti(safeOpts);
+                } catch (err) {
+                    console.error("Confetti error:", err);
+                }
+            }
+        }
+
+        /* Toast UI Helper */
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            if (!toast || !toastMessage) return;
+
+            toastMessage.innerText = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        /* Acoustic Guitar Pluck Synthesizer (Web Audio API) */
+        function playAcousticPluck(freq, delay = 0) {
+            if (!audioCtx || audioCtx.state !== 'running') return;
+
+            setTimeout(() => {
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    // Combination of Triangle and Sine wave for warm acoustic string tone
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                    // Exponential decay simulating string pluck
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.8);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 1.8);
+                } catch(e) {}
+            }, delay);
+        }
+
+        /* Acoustic Arpeggio Loop (Cmaj7 - Am7 - Fmaj7 - G7) */
+        function startAcousticSynthLoop() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            // Note Frequencies (Hz): C4, E4, G4, B4, A4, F4, D4
+            const chords = [
+                [261.63, 329.63, 392.00, 493.88], // Cmaj7
+                [220.00, 261.63, 329.63, 392.00], // Am7
+                [174.61, 261.63, 329.63, 349.23], // Fmaj7
+                [196.00, 246.94, 293.66, 392.00]  // G7
+            ];
+
+            let chordIndex = 0;
+
+            const playPattern = () => {
+                const currentChord = chords[chordIndex];
+                // Arpeggiate plucked notes gently
+                playAcousticPluck(currentChord[0], 0);
+                playAcousticPluck(currentChord[1], 250);
+                playAcousticPluck(currentChord[2], 500);
+                playAcousticPluck(currentChord[3], 750);
+                playAcousticPluck(currentChord[2], 1000);
+                playAcousticPluck(currentChord[1], 1250);
+
+                chordIndex = (chordIndex + 1) % chords.length;
+            };
+
+            playPattern();
+            synthInterval = setInterval(playPattern, 1600);
+        }
+
+        function stopAcousticSynthLoop() {
+            if (synthInterval) {
+                clearInterval(synthInterval);
+                synthInterval = null;
+            }
+        }
+
+        function startAudio() {
+            const audioIcon = document.getElementById('audioIcon');
+            const audioText = document.getElementById('audioText');
+            const bgAudioPlayer = document.getElementById('bgAudioPlayer');
+
+            if (customAudioMp3Url) {
+                bgAudioPlayer.src = customAudioMp3Url;
+                bgAudioPlayer.play().then(() => {
+                    isAudioPlaying = true;
+                    audioIcon.className = "fa-solid fa-volume-high text-emerald-500 animate-pulse";
+                    audioText.innerText = "Musik MP3: ON";
+                    showToast("🎵 Memutar audio MP3 kustom");
+                }).catch(() => {
+                    showToast("⚠️ Gagal memutar MP3. Beralih ke instrumen akustik bawaan.");
+                    customAudioMp3Url = "";
+                    startAcousticSynthLoop();
+                    isAudioPlaying = true;
+                    audioIcon.className = "fa-solid fa-volume-high text-emerald-500 animate-pulse";
+                    audioText.innerText = "Musik : ON";
+                });
+            } else {
+                startAcousticSynthLoop();
+                isAudioPlaying = true;
+                audioIcon.className = "fa-solid fa-volume-high text-emerald-500 animate-pulse";
+                audioText.innerText = "Musik : ON";
+                showToast("🎵 Memutar instrumen petikan gitar akustik");
+            }
+        }
+
+        function stopAudio() {
+            const audioIcon = document.getElementById('audioIcon');
+            const audioText = document.getElementById('audioText');
+            const bgAudioPlayer = document.getElementById('bgAudioPlayer');
+
+            stopAcousticSynthLoop();
+            bgAudioPlayer.pause();
+            
+            isAudioPlaying = false;
+            audioIcon.className = "fa-solid fa-music text-sky-500";
+            audioText.innerText = "Musik : OFF";
+            showToast("🔇 Musik dimatikan");
+        }
+
+        function toggleAudio() {
+            if (!isAudioPlaying) {
+                startAudio();
+            } else {
+                stopAudio();
+            }
+        }
+
+        function updateCardName() {
+            const inputVal = document.getElementById('userNameInput').value.trim();
+            const displayName = document.getElementById('displayName');
+            displayName.innerText = inputVal !== "" ? inputVal : "Pejuang Ujian";
+        }
+
+        function generateNewQuote() {
+            // Trigger Confetti Safely
+            triggerConfetti({
+                particleCount: 80,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#38bdf8', '#34d399', '#fbbf24', '#f472b6']
+            });
+
+            // Pilih Kutipan Acak yang Berbeda dari Sebelumnya
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * quotesDatabase.length);
+            } while (quotesDatabase.length > 1 && randomIndex === currentQuoteIndex);
+
+            currentQuoteIndex = randomIndex;
+            const selected = quotesDatabase[currentQuoteIndex];
+
+            const quoteText = document.getElementById('quoteText');
+            const badgeTag = document.getElementById('badgeTag');
+
+            // Fade transition effect
+            quoteText.style.opacity = '0';
+            badgeTag.style.opacity = '0';
+
+            setTimeout(() => {
+                quoteText.innerText = `"${selected.quote}"`;
+                badgeTag.innerText = selected.tag;
+                quoteText.style.opacity = '1';
+                badgeTag.style.opacity = '1';
+            }, 200);
+        }
+
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('#checklistGroup input[type="checkbox"]');
+            const total = checkboxes.length;
+            let checkedCount = 0;
+
+            checkboxes.forEach(cb => {
+                if (cb.checked) checkedCount++;
+            });
+
+            const percentage = Math.round((checkedCount / total) * 100);
+            
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('checklistPercent').innerText = percentage + '%';
+
+            const readyBanner = document.getElementById('readyBanner');
+            if (percentage === 100) {
+                readyBanner.classList.remove('hidden');
+                triggerConfetti({
+                    particleCount: 120,
+                    spread: 100,
+                    origin: { y: 0.5 }
+                });
+            } else {
+                readyBanner.classList.add('hidden');
+            }
+        }
+
+        function startBreathingExercise() {
+            if (isBreathing) return;
+            isBreathing = true;
+
+            const circle = document.getElementById('breathCircle');
+            const status = document.getElementById('breathStatus');
+            const btn = document.getElementById('breathBtn');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+
+            // Step 1: Tarik Napas (4 detik)
+            status.innerText = "Tarik Napas...";
+            circle.style.transform = "scale(1.4)";
+
+            setTimeout(() => {
+                // Step 2: Tahan Napas (4 detik)
+                status.innerText = "Tahan Napas...";
+                
+                setTimeout(() => {
+                    // Step 3: Hembuskan Napas (4 detik)
+                    status.innerText = "Hembuskan...";
+                    circle.style.transform = "scale(1.0)";
+
+                    setTimeout(() => {
+                        status.innerText = "Selesai ✨";
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-50');
+                        isBreathing = false;
+                        showToast("✨ Kamu sudah lebih tenang sekarang!");
+                    }, 4000);
+
+                }, 4000);
+
+            }, 4000);
+        }
+
+        function copyGreeting() {
+            const name = document.getElementById('displayName').innerText;
+            const quote = document.getElementById('quoteText').innerText;
+            const copyText = `✨ Ucapan Semangat Ujian ✨\n\nUntuk: ${name}\n${quote}\n\nSemoga Sukses Ujiannya Ya! 💪💯`;
+
+            // Reliable Clipboard Fallback
+            const tempInput = document.createElement('textarea');
+            tempInput.value = copyText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            // UI Feedback
+            const copyBtnText = document.getElementById('copyBtnText');
+            const copyIcon = document.getElementById('copyIcon');
+
+            copyBtnText.innerText = "Tersalin!";
+            copyIcon.className = "fa-solid fa-check text-emerald-500";
+            showToast("📋 Ucapan berhasil disalin ke clipboard!");
+
+            setTimeout(() => {
+                copyBtnText.innerText = "Salin Ucapan";
+                copyIcon.className = "fa-solid fa-copy text-sky-500";
+            }, 2500);
+        }
+
+        // Safe initial launch trigger
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                triggerConfetti({
+                    particleCount: 40,
+                    spread: 60,
+                    origin: { y: 0.7 }
+                });
+            }, 300);
+        });
+    </script>
+</body>
+</html>
